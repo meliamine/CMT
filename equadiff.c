@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "mex.h"
 
 double * equadiff(double * c, double * q, double * H, double * R, double vd, double * c0, double * u, double deltaX, double * ca, double * t) {   
     int lenfile = 50;
