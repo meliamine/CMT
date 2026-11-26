@@ -264,3 +264,8 @@ vd = 0.0018;
 
 
 % Emission rate q(t)
+% Import emission rate qi [kg/m²/h]
+
+emission_data = load('data_01_2024/emission_rate_01_2024.mat');
+
+qi = emission_data.q;
