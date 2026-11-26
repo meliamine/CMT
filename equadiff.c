@@ -3,8 +3,9 @@
 #include <math.h>
 #include "mex.h"
 
-double * equadiff(double * c, double * q, double * H, double * R, double vd, double * c0, double * u, double deltaX, double * t) {   
+double * equadiff(double * c, double * q, double * H, double vd, double * c0, double * u, double deltaX, double * t) {   
     int lenfile = 50;
+    double * R;
     double dH = 0;
     double dt = 0;
     double dc = 0;
