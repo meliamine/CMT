@@ -297,5 +297,22 @@ t = double(t(:));
 % Calculate Ri [kg/m3/s]
 Ri = equadiff_mex(C_i, qi, H, vd, C_i0, wind_speed, delta_x, t);
 
+Ri_ug = Ri * 1e9;
 
+Ri_hour = Ri * 1e9 * 3600;
 
+%Compare Ri et H
+figure;
+
+subplot(2,1,1);
+plot(Ri_hour);
+ylabel('Ri [µg/m³/h]');
+title('Residual term');
+grid on;
+
+subplot(2,1,2);
+plot(H);
+ylabel('H [m]');
+xlabel('Time [h]');
+title('Boundary layer height');
+grid on;
