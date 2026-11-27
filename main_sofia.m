@@ -295,5 +295,5 @@ wind_speed = double(wind_speed(:));
 t = double(t(:));
 
 % Calculate Ri [kg/m3/s]
-Ri = equadiff_mex(C_i, qi, H, vd, C_i0, wind_speed, delta_x, t);
+% Ri = equadiff_mex(C_i, qi, H, vd, C_i0, wind_speed, delta_x, t);
 
