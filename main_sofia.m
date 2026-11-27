@@ -19,8 +19,8 @@ lon_east = 23.60;   % [°]
 width_box_sofia = 40.76 * 10^3; % [m]
 height_box_sofia = 27.8 * 10^3; % [km]
 
-fprintf('Longueur Nord-Sud : %.2f km\n', height_box_sofia);
-fprintf('Longueur Est-Ouest : %.2f km\n', width_box_sofia);
+fprintf('Longueur Nord-Sud : %.2f m\n', height_box_sofia);
+fprintf('Longueur Est-Ouest : %.2f m\n', width_box_sofia);
 
 % Area of the box
 A_box_sofia = width_box_sofia * height_box_sofia; % [m^2]
@@ -29,14 +29,21 @@ fprintf('Surface : %.2f m^2\n', A_box_sofia);
 
 %% 2. Import the data for January 2024
 
-% ncdisp(file_name) --> Permet de visualiser la structure des data files,
-% pour après savoir comment attribuer des valeurs aux variables
+% Format des fichiers data = NetCDF (.nc)
+% Ce format stock en 3 dimensisions (lattitude, longitude, temps)
+% ncdisp(file_name) --> Permet de visualiser la structure du fichier,
+% pour après savoir comment attribuer des valeurs aux variables.
+% nc.read(file_name) --> Permet d'extraire les valeurs d'une variable.
 
 % Define the project folder
-% Récupère automatiquement le chemin du dossier dans lequel se trouve le script MATLAB.
+% mfilename('fullpath') -->  trouve le chemin du dossier dans lequel se trouve ce script MATLAB.
+% fileparts(...) --> retire le nom du script pour ne conserver que le chemin du dossier
 project_folder = fileparts(mfilename('fullpath'));
 
 % Import: wind data
+% fullfile() --> permet de construire le chemin complet vers ton fichier en
+% assemblant le dossier principal et le sous dossier.
+% Donc file_vent est le chemin d'accès au fichier et non ces valeurs.
 file_vent = fullfile(project_folder, 'data_01_2024', 'vent_01_2024.nc');
 
 % Define wind's variables 
@@ -79,7 +86,7 @@ time_concentration = ncread(file_concentration_PM_25, 'time');
 % Explication:
 % Nos data n'ont pas été prise avec la même référence de temps initiale. 
 % ERA5 additionne les secondes écoulées depuis le 1 janvier 1970. 
-% CAMS additionne les heures écoulé depuis le 1 janvier 2024.
+% CAMS additionne les heures écoulées depuis le 1 janvier 2024.
 % Grâce à datetime(), on peut convertir ces deux représentations en dates identiques 
 % pour pouvoir comparer et associer nos données.
 % De base on a des int, on transforme en double. 
@@ -156,6 +163,7 @@ idx_east_concentration_outside = find(lon_concentration > lon_east);
 idx_north_concentration_outside = find(lat_concentration > lat_north);
 idx_south_concentration_outside = find(lat_concentration < lat_south);
 
+
 % Extract the corresponding PM2.5 concentration data
 pm2p5_west = pm2p5(idx_west_concentration_outside, idx_lat_concentration, :);
 pm2p5_east = pm2p5(idx_east_concentration_outside, idx_lat_concentration, :);
@@ -194,9 +202,10 @@ wind_speed = sqrt(u10_box_mean.^2 + v10_box_mean.^2);
 wind_direction = mod(atan2d(-u10_box_mean, -v10_box_mean), 360);
 
 
-% Mixing layer height H(t)
+% Mixing layer height H(t) 
 
 % Calculate the hourly spatial mean of the boundary layer height [m]
+
 % Explication: 
 % On calcul la moyenne entre les deux points ERA5 situés dans notre boîte.
 % Hypothèse du modèle : nous considérons la hauteur moyenne des deux points 
@@ -224,16 +233,16 @@ T_celsius = T - 273.15;
 % Hypothèse du modèle : nous considérons que la moyenne arithmétique des 15 points
 % est représentative de la concentration dans l'ensemble de notre boîte.
 C_i = squeeze(mean(pm2p5_box, [1 2]));
-
+C_i = C_i * 1e-9; % Conversion from µg/m³ to kg/m³
 
 % Background concentration C_i0
 % Explication: Nous avons déjà sélectionné les points extérieurs à notre boîte. 
 % Il faut maintenant calculer leur moyenne spatiale pour chaque heure.
-% Calculate hourly mean PM2.5 concentrations outside the box [µg/m3]
-C_west = squeeze(mean(pm2p5_west, [1 2]));
-C_east = squeeze(mean(pm2p5_east, [1 2]));
-C_north = squeeze(mean(pm2p5_north, [1 2]));
-C_south = squeeze(mean(pm2p5_south, [1 2]));
+% Calculate hourly mean PM2.5 concentrations outside the box [kg/m3]
+C_west = squeeze(mean(pm2p5_west, [1 2]))* 1e-9;
+C_east = squeeze(mean(pm2p5_east, [1 2]))* 1e-9;
+C_north = squeeze(mean(pm2p5_north, [1 2]))* 1e-9;
+C_south = squeeze(mean(pm2p5_south, [1 2]))* 1e-9;
 
 % Calculate incoming air flow weights [m^2/s]
 w_west = max(u10_box_mean, 0) * height_box_sofia;
@@ -242,7 +251,7 @@ w_east = max(-u10_box_mean, 0) * height_box_sofia;
 w_south = max(v10_box_mean, 0) * width_box_sofia;
 w_north = max(-v10_box_mean, 0) * width_box_sofia;
 
-% Calculate incoming PM2.5 concentration [µg/m3]
+% Calculate incoming PM2.5 concentration [kg/m3]
 w_total = w_west + w_east + w_south + w_north;
 
 C_i0 = (w_west .* C_west + w_east .* C_east ...
@@ -259,13 +268,32 @@ C_i0(w_total == 0) = C_i(w_total == 0);
 % Nous supposons une longueur caractéristique constante, indépendante de la direction du vent.
 delta_x = (width_box_sofia + height_box_sofia) / 2;
 
-% Dry deposition velocity vd
+% Dry deposition velocity vd [m/s]
 vd = 0.0018;
 
 
 % Emission rate q(t)
-% Import emission rate qi [kg/m²/h]
+% Import emission rate qi [kg/m²h]
+% On extrait la variable q contenue dans emission_data
+file_emission = fullfile(project_folder, 'data_01_2024', 'emission_rate_01_2024.mat');
+emission_data = load(file_emission);
+qi = emission_data.q / 3600; % [kg/m²/s]
 
-emission_data = load('data_01_2024/emission_rate_01_2024.mat');
 
-qi = emission_data.q;
+
+%% 5. Estimation of Ri
+
+% Create time vector [s]
+t = seconds(time_wind - time_wind(1));
+
+% Convert variables to double precision and column vectors
+C_i = double(C_i(:));
+qi = double(qi(:));
+H = double(H(:));
+C_i0 = double(C_i0(:));
+wind_speed = double(wind_speed(:));
+t = double(t(:));
+
+% Calculate Ri [kg/m3/s]
+Ri = equadiff_mex(C_i, qi, H, vd, C_i0, wind_speed, delta_x, t);
+
