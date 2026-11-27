@@ -15,7 +15,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
                          "8 entrees et 1 sortie requises.");
     }
     
-    int lenfile = (int)(mxGetNumberofElements(prhs[0])-1);
+    int lenfile = (int)(mxGetNumberOfElements(prhs[0])-1);
 
     // Verify types and sizes of variables 
     for (int i = 0; i < nrhs; i++) {
