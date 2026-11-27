@@ -1,6 +1,8 @@
 #include "mex.h"
 #include <limits.h>
 
+#include <stdlib.h>
+
 // the function we refer to
 double *equadiff(double * c, double * q, double * H, double vd, double * c0, double * u, double deltaX, double * t, int lenfile);
 
@@ -58,15 +60,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         }
     }
     
-    // Values of variables are taken from matlab to be put in our function
-    double *t = mxGetDouble(prhs[1]);
-    double *u = mxGetDouble(prhs[2]);
-    double *H = mxGetDouble(prhs[3]);
-    double *c = mxGetDouble(prhs[4]);
-    double *c0 = mxGetDouble(prhs[5]);
-    double deltaX = mxGetScalar(prhs[6]);
-    double vd = mxGetScalar(prhs[7]);
-    double *q = mxGetDouble(prhs[8]);
+// Values of variables are taken from MATLAB to be put in our function
+double *c = mxGetDoubles(prhs[0]);
+double *q = mxGetDoubles(prhs[1]);
+double *H = mxGetDoubles(prhs[2]);
+double vd = mxGetScalar(prhs[3]);
+double *c0 = mxGetDoubles(prhs[4]);
+double *u = mxGetDoubles(prhs[5]);
+double deltaX = mxGetScalar(prhs[6]);
+double *t = mxGetDoubles(prhs[7]);
     
     
     // Outputs in MATLAB
